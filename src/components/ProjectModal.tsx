@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Project } from '../data/projects';
-import { X, Check, ShieldCheck, Cpu } from 'lucide-react';
+import { X, Check, ShieldCheck, Cpu, Code2, FileCode } from 'lucide-react';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -21,24 +21,28 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div
-        className="glass-panel w-full max-w-2xl rounded-2xl border border-cyan-500/30 p-6 sm:p-8 bg-neutral-950/95 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+        className="glass-panel w-full max-w-2xl rounded-2xl border border-cyan-500/30 p-6 sm:p-8 bg-neutral-950/98 shadow-2xl relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Status & Category */}
-        <div className="flex items-center gap-2 mb-3">
+        {/* Status, Category & Real Source File */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="text-xs font-mono px-2.5 py-1 rounded bg-neutral-900 border border-white/10 text-cyan-400 uppercase">
             {project.category}
           </span>
           <span className="text-xs font-mono px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
             {project.status}
+          </span>
+          <span className="text-xs font-mono px-2.5 py-1 rounded bg-neutral-900 text-neutral-400 border border-white/5 flex items-center gap-1.5">
+            <FileCode className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{project.sourceFile}</span>
           </span>
         </div>
 
@@ -57,6 +61,22 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
             </div>
           ))}
         </div>
+
+        {/* Real Code Excerpt from Host File */}
+        {project.realCodeSnippet && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-xs font-mono text-neutral-300 mb-2">
+              <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                <Code2 className="w-4 h-4 text-cyan-400" />
+                <span>Verified Host Code Excerpt</span>
+              </span>
+              <span className="text-[11px] text-neutral-500">{project.sourceFile}</span>
+            </div>
+            <pre className="p-4 rounded-xl bg-neutral-900/90 border border-white/10 font-mono text-xs text-cyan-200 overflow-x-auto leading-relaxed">
+              <code>{project.realCodeSnippet}</code>
+            </pre>
+          </div>
+        )}
 
         {/* Deep Dive Description */}
         <div className="mb-6">

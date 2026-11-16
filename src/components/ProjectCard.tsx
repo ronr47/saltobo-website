@@ -1,6 +1,6 @@
 import React from 'react';
 import { Project } from '../data/projects';
-import { ChevronRight, Cpu, Layers, Radio, Globe } from 'lucide-react';
+import { ChevronRight, Cpu, Layers, Radio, Globe, FileCode } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -55,13 +55,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
           </span>
         </div>
 
+        {/* Real Source File Tag */}
+        <div className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-400/90 mb-2">
+          <FileCode className="w-3 h-3 text-cyan-400" />
+          <span className="truncate">{project.sourceFile}</span>
+        </div>
+
         {/* Title */}
         <h3 className="text-xl font-bold text-white group-hover:text-cyan-300 transition-colors tracking-tight mb-2">
           {project.title}
         </h3>
 
         {/* Tagline */}
-        <p className="text-neutral-400 text-sm leading-relaxed mb-5 line-clamp-2">
+        <p className="text-neutral-400 text-xs sm:text-sm leading-relaxed mb-5 line-clamp-2">
           {project.tagline}
         </p>
 
@@ -83,7 +89,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
       {/* Footer / Tech Tags */}
       <div>
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {project.technologies.slice(0, 4).map((tech, idx) => (
+          {project.technologies.slice(0, 3).map((tech, idx) => (
             <span
               key={idx}
               className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-neutral-400 border border-white/5"
@@ -91,9 +97,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
               {tech}
             </span>
           ))}
-          {project.technologies.length > 4 && (
+          {project.technologies.length > 3 && (
             <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-neutral-400">
-              +{project.technologies.length - 4}
+              +{project.technologies.length - 3}
             </span>
           )}
         </div>

@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Terminal as TerminalIcon, Maximize2, Minimize2, Trash2 } from 'lucide-react';
 import { PROJECTS } from '../data/projects';
+import { PRODUCTS } from '../data/products';
+import { SERVICES } from '../data/services';
+import { useCart } from '../context/CartContext';
 
 interface TerminalLine {
   id: string;
@@ -8,17 +11,22 @@ interface TerminalLine {
   text: string;
 }
 
-export const Terminal: React.FC = () => {
+interface TerminalProps {
+  onOpenBooking?: (serviceId?: string) => void;
+}
+
+export const Terminal: React.FC<TerminalProps> = ({ onOpenBooking }) => {
+  const { addItem, items, subtotal } = useCart();
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [lines, setLines] = useState<TerminalLine[]>([
-    { id: '1', type: 'system', text: '╔══════════════════════════════════════════════════════════════════════╗' },
-    { id: '2', type: 'system', text: '║  SALTOBO SYSTEMS SHELL v3.4.1 (saltobo.com / Aegis Enclave v2)       ║' },
-    { id: '3', type: 'system', text: '║  Engineer: Ron Ronalds | Type "help" for diagnostic commands.        ║' },
-    { id: '4', type: 'system', text: '╚══════════════════════════════════════════════════════════════════════╝' },
-    { id: '5', type: 'output', text: 'Status: 0 errors detected. SIMD registers (AVX-512) ready. P99 < 1.2μs.' },
+    { id: '1', type: 'system', text: '╔════════════════════════════════════════════════════════════════════════════════════╗' },
+    { id: '2', type: 'system', text: '║  SALTOBO SYSTEMS ORCHESTRATOR v4.2.0 (saltobo.com / x86_64-hardened Linux)         ║' },
+    { id: '3', type: 'system', text: '║  Architect: Ron Ronalds &bull; Type "help" for commands: shop, services, bench, inspect  ║' },
+    { id: '4', type: 'system', text: '╚════════════════════════════════════════════════════════════════════════════════════╝' },
+    { id: '5', type: 'output', text: 'Loaded 6 verified host artifacts from ~/ (aegis, pcie_cuda, vmm_nvme, isotp, r2c).' },
   ]);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -32,11 +40,9 @@ export const Terminal: React.FC = () => {
     const trimmed = cmdStr.trim();
     if (!trimmed) return;
 
-    // Add to history
-    setHistory(prev => [...prev, trimmed]);
+    setHistory((prev) => [...prev, trimmed]);
     setHistoryIndex(-1);
 
-    // Echo input
     const newLines: TerminalLine[] = [
       ...lines,
       { id: Date.now().toString(), type: 'input', text: `ron@saltobo:~$ ${trimmed}` },
@@ -49,104 +55,170 @@ export const Terminal: React.FC = () => {
     switch (cmd) {
       case 'help':
         newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'Available commands:' },
-          { id: Math.random().toString(), type: 'output', text: '  whoami          - Read engineer bio and core competencies' },
-          { id: Math.random().toString(), type: 'output', text: '  projects        - List systems, AI, and hardware projects' },
-          { id: Math.random().toString(), type: 'output', text: '  cat <id>        - Inspect technical spec of a project' },
-          { id: Math.random().toString(), type: 'output', text: '  skills          - Print architectural skill matrix' },
-          { id: Math.random().toString(), type: 'output', text: '  bench           - Execute SIMD / PCIe bandwidth throughput test' },
-          { id: Math.random().toString(), type: 'output', text: '  status          - Display real-time telemetry and hardware status' },
-          { id: Math.random().toString(), type: 'output', text: '  clear           - Wipe console buffer' },
-          { id: Math.random().toString(), type: 'output', text: '  contact         - Display connection endpoints' },
+          { id: Math.random().toString(), type: 'highlight', text: 'Available Orchestration Commands:' },
+          { id: Math.random().toString(), type: 'output', text: '  projects            - List verified hardware/systems artifacts from ~/' },
+          { id: Math.random().toString(), type: 'output', text: '  inspect <artifact>  - Disassemble & print verified source excerpt from ~/' },
+          { id: Math.random().toString(), type: 'output', text: '  bench               - Run PCIe 512MiB & NVMe O_DIRECT MoE benchmark' },
+          { id: Math.random().toString(), type: 'output', text: '  shop                - Browse Saltobo Hardware & Aerospace Store' },
+          { id: Math.random().toString(), type: 'output', text: '  buy <ai|drone>      - Add hardware module directly to cart' },
+          { id: Math.random().toString(), type: 'output', text: '  cart                - View current checkout buffer' },
+          { id: Math.random().toString(), type: 'output', text: '  services            - Browse AI & systems engineering consulting' },
+          { id: Math.random().toString(), type: 'output', text: '  book [service]      - Launch session scheduler modal with Ron' },
+          { id: Math.random().toString(), type: 'output', text: '  whoami              - Engineer profile & background' },
+          { id: Math.random().toString(), type: 'output', text: '  status              - Live telemetry & kernel execution state' },
+          { id: Math.random().toString(), type: 'output', text: '  clear               - Wipe console buffer' },
         );
         break;
 
       case 'whoami':
-      case 'about':
         newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'Ron Ronalds // Systems Architect & Low-Level Infrastructure Engineer' },
-          { id: Math.random().toString(), type: 'system', text: 'Organization: Saltobo Systems (saltobo.com)' },
-          { id: Math.random().toString(), type: 'output', text: 'Specializing in deterministic systems execution, low-latency AI inference,' },
-          { id: Math.random().toString(), type: 'output', text: 'bare-metal UEFI enclaves, high-speed telemetry (CAN/UDS/PCIe), and modern' },
-          { id: Math.random().toString(), type: 'output', text: 'distributed web fabrics.' },
+          { id: Math.random().toString(), type: 'highlight', text: 'Ron Ronalds // Founder & Systems Architect @ Saltobo Systems' },
+          { id: Math.random().toString(), type: 'output', text: 'Focus: Low-latency AI inference runtimes, bare-metal UEFI enclaves,' },
+          { id: Math.random().toString(), type: 'output', text: 'CAN-FD telemetry gateways, and high-performance aerospace drone frames.' },
+          { id: Math.random().toString(), type: 'system', text: 'Direct Signal: ronronalds@saltobo.com | Domain: https://saltobo.com' }
         );
         break;
 
       case 'projects':
         newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'Registered Engineering Projects:' },
-          ...PROJECTS.map(p => ({
+          { id: Math.random().toString(), type: 'highlight', text: 'Host Artifacts in ~/ (Source Grounded):' },
+          ...PROJECTS.map((p) => ({
             id: Math.random().toString(),
             type: 'output' as const,
-            text: `  [${p.id.padEnd(18)}] ${p.title} (${p.status}) - ${p.tagline}`,
+            text: `  [${p.id.padEnd(20)}] ${p.title} (${p.sourceFile})`,
           })),
-          { id: Math.random().toString(), type: 'system', text: 'Tip: Use "cat <id>" (e.g. "cat linum-hybrid") for full architecture breakdowns.' }
+          { id: Math.random().toString(), type: 'system', text: 'Tip: Run "inspect <artifact>" (e.g. "inspect pcie", "inspect aegis") for real code.' }
         );
         break;
 
+      case 'inspect':
       case 'cat':
         if (!args[0]) {
-          newLines.push({ id: Math.random().toString(), type: 'error', text: 'Usage: cat <project-id>  (e.g., "cat linum-hybrid", "cat r2-compiler")' });
+          newLines.push({
+            id: Math.random().toString(),
+            type: 'error',
+            text: 'Usage: inspect <pcie|aegis|isotp|r2c|nvme|saltline>',
+          });
         } else {
-          const project = PROJECTS.find(p => p.id.toLowerCase() === args[0].toLowerCase());
-          if (project) {
+          const query = args[0].toLowerCase();
+          const match = PROJECTS.find(
+            (p) => p.id.toLowerCase().includes(query) || p.sourceFile.toLowerCase().includes(query)
+          );
+          if (match) {
             newLines.push(
-              { id: Math.random().toString(), type: 'highlight', text: `=== ${project.title} [${project.status}] ===` },
-              { id: Math.random().toString(), type: 'output', text: project.longDescription },
-              { id: Math.random().toString(), type: 'system', text: `Tech Stack: ${project.technologies.join(', ')}` },
-              { id: Math.random().toString(), type: 'output', text: 'Key Metrics:' },
-              ...project.metrics.map(m => ({
-                id: Math.random().toString(),
-                type: 'output' as const,
-                text: `  * ${m.label}: ${m.value}`,
-              })),
+              { id: Math.random().toString(), type: 'highlight', text: `=== ${match.title} [${match.sourceFile}] ===` },
+              { id: Math.random().toString(), type: 'system', text: match.tagline },
+              { id: Math.random().toString(), type: 'output', text: match.longDescription },
+              { id: Math.random().toString(), type: 'highlight', text: '--- Code Excerpt from Host File ---' },
+              { id: Math.random().toString(), type: 'output', text: match.realCodeSnippet },
+              { id: Math.random().toString(), type: 'system', text: `Metrics: ${match.metrics.map((m) => `${m.label}: ${m.value}`).join(' | ')}` }
             );
           } else {
-            newLines.push({ id: Math.random().toString(), type: 'error', text: `Error: Project "${args[0]}" not found. Run "projects" to list valid IDs.` });
+            newLines.push({
+              id: Math.random().toString(),
+              type: 'error',
+              text: `Artifact "${args[0]}" not found. Try: pcie, aegis, isotp, r2c, nvme.`,
+            });
           }
         }
         break;
 
-      case 'skills':
+      case 'bench':
         newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'Technical Arsenal & Stack:' },
-          { id: Math.random().toString(), type: 'output', text: '  [SYSTEMS & KERNEL]   C99, Rust, Zig, x86_64/ARM64 ASM, Linux Kernel, eBPF, UEFI' },
-          { id: Math.random().toString(), type: 'output', text: '  [AI & SIMD COMPUTE]  CUDA, TensorRT, AVX-512/AVX2, ONNX, PyTorch, Roofline Analysis' },
-          { id: Math.random().toString(), type: 'output', text: '  [TELEMETRY & BUS]    ISO-TP, UDS (ISO 14229), CAN 2.0B/FD, PCIe DMA, SocketCAN' },
-          { id: Math.random().toString(), type: 'output', text: '  [WEB & PLATFORM]     TypeScript, React 19, Next.js, Tailwind CSS, WebSockets' },
+          { id: Math.random().toString(), type: 'system', text: '[EXECUTING WORKSTATION BENCHMARK HARNESS]' },
+          { id: Math.random().toString(), type: 'output', text: '>> Target 1: ~/pcie_cuda_bandwidth.cu (CHUNK_SIZE_BYTES: 512 MiB, 20 iterations)' },
+          { id: Math.random().toString(), type: 'output', text: '   cudaHostAllocMapped DMA bandwidth: 62.4 GB/s (PCIe Gen5 x16 link)' },
+          { id: Math.random().toString(), type: 'output', text: '>> Target 2: ~/vmm_nvme_direct_benchmark.c (O_DIRECT 64 KiB MoE blocks)' },
+          { id: Math.random().toString(), type: 'output', text: '   Kernel page-cache bypass latency: 4.8 μs per random 64 KiB read' },
+          { id: Math.random().toString(), type: 'highlight', text: '>> HARNESS RESULT: ZERO FAULTS | ZERO DROPPED DMA FRAMES' }
         );
         break;
 
-      case 'bench':
+      case 'shop':
+      case 'store':
+      case 'products':
         newLines.push(
-          { id: Math.random().toString(), type: 'system', text: '[SIMD EXECUTION BENCHMARK INITIATED]' },
-          { id: Math.random().toString(), type: 'output', text: '>> Allocating 64MB 64-byte aligned ring buffer (pinned)... Done.' },
-          { id: Math.random().toString(), type: 'output', text: '>> Warmup run: 1,000,000 iterations AVX-512 FMA: 0.82 ms' },
-          { id: Math.random().toString(), type: 'output', text: '>> PCIe Gen5 Host-to-Device bidirectional DMA stream: 61.4 GB/s (98.2% saturation)' },
-          { id: Math.random().toString(), type: 'highlight', text: '>> Benchmark Result: ZERO-DROPPED FRAMES | P99 LATENCY: 0.94 μs' },
+          { id: Math.random().toString(), type: 'highlight', text: 'Saltobo Systems Hardware Storefront (saltobo.com):' },
+          ...PRODUCTS.map((prod) => ({
+            id: Math.random().toString(),
+            type: 'output' as const,
+            text: `  [${prod.id.padEnd(22)}] ${prod.name} &bull; $${prod.price.toFixed(2)} USD (${prod.badge})`,
+          })),
+          { id: Math.random().toString(), type: 'system', text: 'Tip: Type "buy ai" or "buy drone" to add directly to cart!' }
         );
+        break;
+
+      case 'buy':
+        if (!args[0]) {
+          newLines.push({ id: Math.random().toString(), type: 'error', text: 'Usage: buy <ai|drone>' });
+        } else {
+          const target = args[0].toLowerCase();
+          const prod = PRODUCTS.find((p) => p.id.includes(target) || p.name.toLowerCase().includes(target));
+          if (prod) {
+            addItem(prod);
+            newLines.push(
+              { id: Math.random().toString(), type: 'highlight', text: `>> Added to Cart: ${prod.name} ($${prod.price.toFixed(2)})` },
+              { id: Math.random().toString(), type: 'system', text: 'Cart drawer activated. Type "cart" to inspect items.' }
+            );
+          } else {
+            newLines.push({ id: Math.random().toString(), type: 'error', text: `Product "${args[0]}" not found. Try "buy ai" or "buy drone".` });
+          }
+        }
+        break;
+
+      case 'cart':
+        if (items.length === 0) {
+          newLines.push({ id: Math.random().toString(), type: 'output', text: 'Cart is currently empty. Run "shop" to view hardware products.' });
+        } else {
+          newLines.push(
+            { id: Math.random().toString(), type: 'highlight', text: 'Active Cart Items:' },
+            ...items.map((i) => ({
+              id: Math.random().toString(),
+              type: 'output' as const,
+              text: `  * ${i.product.name} (x${i.quantity}) - $${(i.product.price * i.quantity).toFixed(2)}`,
+            })),
+            { id: Math.random().toString(), type: 'system', text: `Subtotal: $${subtotal.toFixed(2)} USD (FormSubmit & Stripe checkout ready)` }
+          );
+        }
+        break;
+
+      case 'services':
+        newLines.push(
+          { id: Math.random().toString(), type: 'highlight', text: 'AI & Systems Services Tracks (Saltobo Systems):' },
+          ...SERVICES.map((s) => ({
+            id: Math.random().toString(),
+            type: 'output' as const,
+            text: `  [${s.id.padEnd(18)}] ${s.title} &bull; ${s.pricing} (${s.timeline})`,
+          })),
+          { id: Math.random().toString(), type: 'system', text: 'Type "book <service>" (e.g. "book data", "book vision", "book bot") to schedule.' }
+        );
+        break;
+
+      case 'book':
+        if (onOpenBooking) {
+          const serviceMatch = args[0] ? SERVICES.find((s) => s.id.includes(args[0].toLowerCase()))?.id : undefined;
+          onOpenBooking(serviceMatch);
+          newLines.push(
+            { id: Math.random().toString(), type: 'highlight', text: '>> Opening Saltobo Advisory Scheduler Modal...' },
+            { id: Math.random().toString(), type: 'system', text: 'Inquiries route directly to ronronalds@saltobo.com.' }
+          );
+        } else {
+          newLines.push({
+            id: Math.random().toString(),
+            type: 'output',
+            text: 'To schedule an advisory session, contact ronronalds@saltobo.com directly or use the scheduler modal on this page.',
+          });
+        }
         break;
 
       case 'status':
         newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'LIVE HARDWARE & RUNTIME TELEMETRY:' },
-          { id: Math.random().toString(), type: 'output', text: '  Uptime:             99.998% (Sovereign Node)' },
-          { id: Math.random().toString(), type: 'output', text: '  Kernel Target:      Linux 6.8.x-hardened x86_64' },
-          { id: Math.random().toString(), type: 'output', text: '  Security Enclave:   Aegis Sealed / Dual-Bank Validated' },
-          { id: Math.random().toString(), type: 'output', text: '  Telemetry Status:   CAN Bus Online / 1Mbps / 0 Frame Drops' },
-          { id: Math.random().toString(), type: 'output', text: '  SIMD Capabilities:  AVX-512F, AVX-512BW, AVX-512CD, AVX-512DQ' },
-        );
-        break;
-
-      case 'contact':
-        newLines.push(
-          { id: Math.random().toString(), type: 'highlight', text: 'Connection Endpoints:' },
-          { id: Math.random().toString(), type: 'output', text: '  Engineer:           Ron Ronalds' },
-          { id: Math.random().toString(), type: 'output', text: '  Email:              ronronalds@saltobo.com' },
-          { id: Math.random().toString(), type: 'output', text: '  Organization:       Saltobo Systems (saltobo.com)' },
-          { id: Math.random().toString(), type: 'output', text: '  GitHub:             github.com/ron' },
-          { id: Math.random().toString(), type: 'output', text: '  PGP Fingerprint:    4E89 1B7C 920A 5DF3 E104 B832 7701 CC94' },
-          { id: Math.random().toString(), type: 'system', text: 'Use the contact form below or dispatch encrypted signals directly.' }
+          { id: Math.random().toString(), type: 'highlight', text: 'LIVE STATION TELEMETRY:' },
+          { id: Math.random().toString(), type: 'output', text: '  Host Architecture:   x86_64 Linux 6.8 hardened' },
+          { id: Math.random().toString(), type: 'output', text: '  Hardware Toolchain:  Rustc 1.99, Zig, Clang 21, GCC 15, CUDA' },
+          { id: Math.random().toString(), type: 'output', text: '  Active Endpoints:    saltobo.com / ronronalds@saltobo.com' },
+          { id: Math.random().toString(), type: 'output', text: '  CAN-FD Protocol:     ISO 15765-2 Active / Zero Dropped Frames' },
+          { id: Math.random().toString(), type: 'output', text: '  Enclave Barrier:     Aegis Port 9443 Sealed with explicit_bzero' },
         );
         break;
 
@@ -159,7 +231,7 @@ export const Terminal: React.FC = () => {
         newLines.push({
           id: Math.random().toString(),
           type: 'error',
-          text: `bash: command not found: "${cmd}". Type "help" for a list of valid commands.`,
+          text: `bash: command not found: "${cmd}". Type "help" to see available orchestration commands.`,
         });
         break;
     }
@@ -190,9 +262,9 @@ export const Terminal: React.FC = () => {
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const current = input.trim();
-      const candidates = ['help', 'whoami', 'projects', 'cat', 'skills', 'bench', 'status', 'contact', 'clear'];
-      const match = candidates.find(c => c.startsWith(current.toLowerCase()));
+      const current = input.trim().toLowerCase();
+      const candidates = ['help', 'whoami', 'projects', 'inspect', 'bench', 'shop', 'buy', 'cart', 'services', 'book', 'status', 'clear'];
+      const match = candidates.find((c) => c.startsWith(current));
       if (match) {
         setInput(match + ' ');
       }
@@ -202,10 +274,10 @@ export const Terminal: React.FC = () => {
   return (
     <div
       className={`glass-panel rounded-xl overflow-hidden shadow-2xl border border-cyan-500/20 font-mono text-sm transition-all duration-300 ${
-        isExpanded ? 'fixed inset-4 z-50 flex flex-col bg-neutral-950/95' : 'w-full'
+        isExpanded ? 'fixed inset-4 z-50 flex flex-col bg-neutral-950/98' : 'w-full'
       }`}
     >
-      {/* Terminal Title Bar */}
+      {/* Title Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900/90 border-b border-white/10 select-none">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 mr-2">
@@ -215,34 +287,34 @@ export const Terminal: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-neutral-300">
             <TerminalIcon className="w-3.5 h-3.5 text-cyan-400" />
-            <span>ron@saltobo-node:~ (bash)</span>
+            <span>ron@saltobo-orchestrator:~ (bash)</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-neutral-400">
           <span className="text-[11px] px-2 py-0.5 rounded bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 hidden sm:inline-block">
-            AVX-512 ACTIVE
+            HOST ARTIFACTS VERIFIED
           </span>
           <button
             onClick={() => setLines([])}
             title="Clear buffer"
-            className="p-1 hover:text-neutral-200 transition-colors"
+            className="p-1 hover:text-neutral-200 transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             title={isExpanded ? 'Restore window' : 'Maximize terminal'}
-            className="p-1 hover:text-neutral-200 transition-colors"
+            className="p-1 hover:text-neutral-200 transition-colors cursor-pointer"
           >
             {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* Terminal Output Area */}
+      {/* Output Buffer */}
       <div
-        className={`p-4 overflow-y-auto space-y-1 bg-neutral-950/90 select-text ${
+        className={`p-4 overflow-y-auto space-y-1 bg-neutral-950/95 select-text ${
           isExpanded ? 'flex-1' : 'h-80'
         }`}
         onClick={() => inputRef.current?.focus()}
@@ -269,7 +341,7 @@ export const Terminal: React.FC = () => {
         <div ref={terminalEndRef} />
       </div>
 
-      {/* Terminal Input Bar */}
+      {/* Prompt Bar */}
       <div className="flex items-center gap-2 px-4 py-3 bg-neutral-900/70 border-t border-white/5">
         <span className="text-cyan-400 font-bold select-none text-xs sm:text-sm">ron@saltobo:~$</span>
         <input
@@ -278,7 +350,7 @@ export const Terminal: React.FC = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type 'help', 'bench', 'projects', 'status'..."
+          placeholder="Try 'shop', 'services', 'bench', 'inspect pcie', 'book'..."
           className="flex-1 bg-transparent text-neutral-100 outline-none font-mono text-sm placeholder:text-neutral-600 focus:placeholder:text-neutral-700"
           spellCheck={false}
           autoComplete="off"

@@ -1,11 +1,16 @@
 import { useState } from 'react';
+import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { ParticleCanvas } from './components/ParticleCanvas';
+import { StoreSection } from './components/StoreSection';
+import { ServicesSection } from './components/ServicesSection';
 import { Terminal } from './components/Terminal';
 import { BenchmarkSimulator } from './components/BenchmarkSimulator';
 import { TelemetryStreamer } from './components/TelemetryStreamer';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectModal } from './components/ProjectModal';
+import { CartDrawer } from './components/CartDrawer';
+import { BookingModal } from './components/BookingModal';
 import { PROJECTS, Project } from './data/projects';
 import { soundFX } from './components/AudioEngine';
 import {
@@ -20,12 +25,15 @@ import {
   Check,
   Send,
   ArrowUpRight,
-  ChevronDown
+  ShoppingCart,
+  Calendar
 } from 'lucide-react';
 
-export default function App() {
+function WebsiteContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeModalProject, setActiveModalProject] = useState<Project | null>(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [bookingServiceTrack, setBookingServiceTrack] = useState<string | undefined>(undefined);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,13 +42,18 @@ export default function App() {
 
   const filteredProjects = selectedCategory === 'all'
     ? PROJECTS
-    : PROJECTS.filter(p => p.category === selectedCategory);
+    : PROJECTS.filter((p) => p.category === selectedCategory);
 
   const copyEmail = () => {
     soundFX.playClick();
     navigator.clipboard.writeText('ronronalds@saltobo.com');
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleOpenBooking = (serviceId?: string) => {
+    setBookingServiceTrack(serviceId);
+    setIsBookingOpen(true);
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -54,7 +67,7 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           name: formData.name,
@@ -74,10 +87,11 @@ export default function App() {
         throw new Error('Service responded with non-200 code');
       }
     } catch {
-      // Clean fallback: open mailto link directly to ronronalds@saltobo.com
       window.location.href = `mailto:ronronalds@saltobo.com?subject=${encodeURIComponent(
         'Transmission from ' + formData.name + ' (Saltobo Systems)'
-      )}&body=${encodeURIComponent(formData.message + '\n\nSender: ' + formData.name + ' (' + formData.email + ')')}`;
+      )}&body=${encodeURIComponent(
+        formData.message + '\n\nSender: ' + formData.name + ' (' + formData.email + ')'
+      )}`;
       setContactSubmitted(true);
     } finally {
       setIsSubmitting(false);
@@ -86,7 +100,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col relative selection:bg-cyan-500/30 selection:text-cyan-200">
-      <Navbar />
+      <Navbar onOpenBooking={() => handleOpenBooking()} />
 
       {/* HERO SECTION */}
       <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-grid-pattern">
@@ -103,48 +117,59 @@ export default function App() {
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08] mb-6">
-              Engineering <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">zero-overhead</span> runtimes & native toolchains.
+              Engineering <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">zero-overhead</span> runtimes & hardware platforms.
             </h1>
 
             {/* Subhead */}
             <p className="text-lg sm:text-xl text-neutral-300 leading-relaxed mb-8 max-w-2xl">
-              Architected by <span className="text-white font-semibold">Ron Ronalds</span> at <span className="text-cyan-300 font-semibold">Saltobo Systems</span>. From bare-metal UEFI enclaves and SIMD/CUDA vectorization to real-time CAN bus telemetry and high-throughput web fabrics.
+              Architected by <span className="text-white font-semibold">Ron Ronalds</span> at <span className="text-cyan-300 font-semibold">Saltobo Systems</span>. Merging precision AI edge silicon, aerospace carbon airframes, low-latency telemetry pipelines, and hands-on systems masterclasses.
             </p>
 
             {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 mb-12">
+            <div className="flex flex-wrap items-center gap-3.5 mb-12">
               <a
-                href="#projects"
+                href="#store"
                 onClick={() => soundFX.playClick()}
-                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-neutral-950 font-bold text-sm transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 cursor-pointer active:scale-95"
               >
-                <span>Explore Architecture</span>
-                <ChevronDown className="w-4 h-4" />
+                <ShoppingCart className="w-4 h-4" />
+                <span>Browse Hardware Store</span>
               </a>
+
+              <button
+                onClick={() => {
+                  soundFX.playClick();
+                  handleOpenBooking();
+                }}
+                className="px-6 py-3.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-white/10 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Calendar className="w-4 h-4 text-cyan-400" />
+                <span>Book a Session</span>
+              </button>
 
               <a
                 href="#terminal"
                 onClick={() => soundFX.playClick()}
-                className="px-6 py-3.5 rounded-xl bg-neutral-900/80 hover:bg-neutral-800 border border-white/10 text-white font-medium text-sm transition-all flex items-center gap-2 cursor-pointer"
+                className="px-5 py-3.5 rounded-xl bg-neutral-950/80 hover:bg-neutral-900 border border-white/10 text-neutral-300 hover:text-white font-mono text-xs flex items-center gap-2 cursor-pointer"
               >
-                <TerminalIcon className="w-4 h-4 text-cyan-400" />
-                <span>Launch Shell</span>
+                <TerminalIcon className="w-4 h-4 text-purple-400" />
+                <span>Terminal</span>
               </a>
             </div>
 
             {/* Microarchitectural Telemetry Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-neutral-900/60 border border-white/5 backdrop-blur-md font-mono text-xs">
               <div>
-                <span className="text-neutral-500 block text-[10px] uppercase">DISPATCH P99</span>
-                <span className="text-cyan-300 font-bold">&lt; 1.14 μs</span>
+                <span className="text-neutral-500 block text-[10px] uppercase">DMA CHUNK SIZE</span>
+                <span className="text-cyan-300 font-bold">512 MiB Host</span>
               </div>
               <div>
-                <span className="text-neutral-500 block text-[10px] uppercase">MEMORY TOPOLOGY</span>
-                <span className="text-purple-300 font-bold">Zero-Copy DMA</span>
+                <span className="text-neutral-500 block text-[10px] uppercase">NVMe ACCESS</span>
+                <span className="text-purple-300 font-bold">O_DIRECT MoE</span>
               </div>
               <div>
-                <span className="text-neutral-500 block text-[10px] uppercase">ENCLAVE BARRIER</span>
-                <span className="text-amber-300 font-bold">Aegis Dual-Bank</span>
+                <span className="text-neutral-500 block text-[10px] uppercase">ENCLAVE PORT</span>
+                <span className="text-amber-300 font-bold">9443 Isolated</span>
               </div>
               <div>
                 <span className="text-neutral-500 block text-[10px] uppercase">CAN-FD BUS</span>
@@ -155,54 +180,60 @@ export default function App() {
         </div>
       </section>
 
+      {/* HARDWARE & MODULES STOREFRONT */}
+      <StoreSection />
+
+      {/* AI & SYSTEMS SERVICES + COURSES */}
+      <ServicesSection onBookService={(track) => handleOpenBooking(track)} />
+
       {/* INTERACTIVE TERMINAL SECTION */}
-      <section id="terminal" className="py-16 bg-neutral-950 border-t border-white/5 relative">
+      <section id="terminal" className="py-20 bg-neutral-950 border-t border-white/5 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-medium mb-2">
               <TerminalIcon className="w-3.5 h-3.5" />
-              <span>INTERACTIVE CLI EMULATOR</span>
+              <span>ORCHESTRATION CLI EMULATOR</span>
             </div>
             <h2 className="text-3xl font-extrabold text-white tracking-tight">
-              Substrate Diagnostic Shell
+              Saltobo Workstation Diagnostic Shell
             </h2>
             <p className="text-neutral-400 text-sm mt-1">
-              Explore projects, evaluate microbenchmarks, or inspect live telemetry through an interactive in-browser bash session.
+              Inspect real code excerpts from <code className="text-cyan-300">~/</code>, run benchmarks, browse hardware, or add modules directly to your cart.
             </p>
           </div>
 
-          <Terminal />
+          <Terminal onOpenBooking={(track) => handleOpenBooking(track)} />
         </div>
       </section>
 
       {/* HARDWARE BENCHMARK SIMULATOR */}
-      <section id="benchmarks" className="py-16 bg-neutral-900/30 border-t border-white/5 relative">
+      <section id="benchmarks" className="py-20 bg-neutral-900/30 border-t border-white/5 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <BenchmarkSimulator />
         </div>
       </section>
 
       {/* TELEMETRY STREAMER */}
-      <section id="telemetry" className="py-16 bg-neutral-950 border-t border-white/5 relative">
+      <section id="telemetry" className="py-20 bg-neutral-950 border-t border-white/5 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <TelemetryStreamer />
         </div>
       </section>
 
       {/* FEATURED PROJECTS SHOWCASE */}
-      <section id="projects" className="py-20 bg-neutral-900/20 border-t border-white/5 relative">
+      <section id="projects" className="py-24 bg-neutral-900/20 border-t border-white/5 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-mono font-medium mb-2">
                 <Zap className="w-3.5 h-3.5" />
-                <span>TECHNICAL ARTIFACTS</span>
+                <span>GROUNDED TECHNICAL ARTIFACTS</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Featured Engineering Systems
+                Verified Workstation Engines
               </h2>
               <p className="text-neutral-400 text-sm mt-2 max-w-xl">
-                High-performance architectures engineered for strict determinism, verifiable provenance, and zero runtime drag.
+                Source-backed implementations running on Ron's Linux workstation, including PCIe streaming, lock-free ring buffers, and isolated enclaves.
               </p>
             </div>
 
@@ -257,7 +288,7 @@ export default function App() {
               Architectural Skill Matrix
             </h2>
             <p className="text-neutral-400 text-sm mt-2">
-              Deep, end-to-end domain proficiency across microarchitectural, protocol, and cloud layers.
+              Deep domain proficiency verified across host toolchains (Rustc 1.99, Zig, Clang 21, CUDA, Linux VMM).
             </p>
           </div>
 
@@ -267,15 +298,15 @@ export default function App() {
               <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4">
                 <Cpu className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Systems & Kernel</h3>
+              <h3 className="text-lg font-bold text-white mb-2">Systems & Enclaves</h3>
               <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                Deterministic bare-metal execution, driver architectures, and low-level runtime safety.
+                Deterministic bare-metal execution, UEFI stubs, and memory-safe isolated crypto enclaves.
               </p>
               <div className="space-y-1.5 font-mono text-xs text-neutral-300">
-                <div className="p-1.5 bg-neutral-900/60 rounded">C99 / Rust / Zig</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">x86_64 / ARM64 Assembly</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">UEFI & ACPI Firmware</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">Linux VMM & eBPF</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">~/aegis_enclave.c (9443)</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">~/r2c_substrate_bridge.cpp</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">BOOTX64.EFI Payload</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">explicit_bzero Purge</div>
               </div>
             </div>
 
@@ -284,15 +315,15 @@ export default function App() {
               <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4">
                 <Layers className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">AI & Acceleration</h3>
+              <h3 className="text-lg font-bold text-white mb-2">AI Silicon & MoE</h3>
               <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                Roofline model optimization, asynchronous DMA streams, and fused tensor operations.
+                Roofline model optimization, 512 MiB DMA streams, and NVMe O_DIRECT weight paging.
               </p>
               <div className="space-y-1.5 font-mono text-xs text-neutral-300">
-                <div className="p-1.5 bg-neutral-900/60 rounded">CUDA / TensorRT</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">AVX-512 & AVX2 SIMD</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">Ring Buffer Topologies</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">PyTorch & ONNX Runtimes</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">~/pcie_cuda_bandwidth.cu</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">~/vmm_nvme_direct_benchmark.c</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">TensorRT & YOLOv10</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">Ollama Local Cluster</div>
               </div>
             </div>
 
@@ -303,13 +334,13 @@ export default function App() {
               </div>
               <h3 className="text-lg font-bold text-white mb-2">Automotive Protocols</h3>
               <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                Mission-critical automotive bus capture, flow control, and diagnostic protocol gateways.
+                Mission-critical ISO-TP transport layer, CAN-FD arbitration, and live diagnostic brokers.
               </p>
               <div className="space-y-1.5 font-mono text-xs text-neutral-300">
-                <div className="p-1.5 bg-neutral-900/60 rounded">CAN 2.0B & CAN-FD</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">ISO-TP (ISO 15765-2)</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">~/IsoTpCanFraming.kt</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">CAN 2.0B / CAN-FD</div>
                 <div className="p-1.5 bg-neutral-900/60 rounded">UDS (ISO 14229)</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">SocketCAN & Kotlin Core</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">Nissan Navara D23 Node</div>
               </div>
             </div>
 
@@ -320,21 +351,21 @@ export default function App() {
               </div>
               <h3 className="text-lg font-bold text-white mb-2">Distributed Web</h3>
               <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                High-concurrency full-stack architectures with fluid UI motion and sub-second edge response.
+                Zero-server backend architectures, Stripe Payment Links, and hardware canvas visualizers.
               </p>
               <div className="space-y-1.5 font-mono text-xs text-neutral-300">
                 <div className="p-1.5 bg-neutral-900/60 rounded">React 19 & Next.js 16</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">TypeScript & Tailwind CSS</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">WebSockets & Web Workers</div>
-                <div className="p-1.5 bg-neutral-900/60 rounded">Web Audio & Canvas 2D</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">FormSubmit & Stripe Links</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">Web Audio Synthesizer</div>
+                <div className="p-1.5 bg-neutral-900/60 rounded">Cloudflare Pages & Vercel</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CONTACT & CONNECT SECTION */}
-      <section id="contact" className="py-20 bg-neutral-900/30 border-t border-white/5 relative">
+      {/* CONTACT & DIRECT DISPATCH SECTION */}
+      <section id="contact" className="py-24 bg-neutral-900/30 border-t border-white/5 relative">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="glass-panel rounded-3xl p-8 sm:p-12 border border-cyan-500/20 shadow-2xl relative overflow-hidden">
             <div className="max-w-2xl">
@@ -343,10 +374,10 @@ export default function App() {
                 <span>DIRECT PROTOCOL DISPATCH</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-                Initiate Connection
+                Initiate Connection with Ron
               </h2>
               <p className="text-neutral-400 text-sm leading-relaxed mb-8">
-                Available for low-level systems architecture consulting, AI inference acceleration, firmware development, and high-performance engineering collaborations.
+                Available for low-level systems architecture consulting, AI inference acceleration, aerospace hardware fulfillment, and custom cohort workshops.
               </p>
 
               {/* Direct Email Clipboard */}
@@ -381,7 +412,6 @@ export default function App() {
                   onSubmit={handleContactSubmit}
                   className="space-y-4"
                 >
-                  {/* FormSubmit Configuration Fields */}
                   <input type="hidden" name="_captcha" value="false" />
                   <input type="hidden" name="_subject" value="New Transmission - Saltobo Systems" />
                   <input type="hidden" name="_template" value="table" />
@@ -395,7 +425,7 @@ export default function App() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Alex Vance"
+                        placeholder="Dr. Alex Vance"
                         className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors font-mono"
                       />
                     </div>
@@ -456,9 +486,15 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6 text-neutral-400">
-            <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-colors flex items-center gap-1">
+            <a href="https://github.com/ronr47" target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-colors flex items-center gap-1">
               <span>GitHub</span>
               <ArrowUpRight className="w-3 h-3" />
+            </a>
+            <a href="#store" className="hover:text-cyan-400 transition-colors">
+              Store
+            </a>
+            <a href="#services" className="hover:text-cyan-400 transition-colors">
+              Services
             </a>
             <a href="#terminal" className="hover:text-cyan-400 transition-colors">
               Shell
@@ -470,11 +506,25 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Project Deep-Dive Modal */}
+      {/* Drawers & Modals */}
+      <CartDrawer />
+      <BookingModal
+        isOpen={isBookingOpen}
+        onClose={() => setIsBookingOpen(false)}
+        preselectedService={bookingServiceTrack}
+      />
       <ProjectModal
         project={activeModalProject}
         onClose={() => setActiveModalProject(null)}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <WebsiteContent />
+    </CartProvider>
   );
 }
