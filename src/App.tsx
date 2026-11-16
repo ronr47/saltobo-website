@@ -1,3 +1,4 @@
+import { LiveTelemetryBanner } from "./components/LiveTelemetryBanner";
 import { useState } from 'react';
 import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
@@ -100,6 +101,7 @@ function WebsiteContent() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col relative selection:bg-cyan-500/30 selection:text-cyan-200">
+      <LiveTelemetryBanner />
       <Navbar onOpenBooking={() => handleOpenBooking()} />
 
       {/* HERO SECTION */}
